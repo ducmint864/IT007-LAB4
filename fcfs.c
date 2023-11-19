@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
+#include <string.h>
 #define SORT_BY_ARRIVAL 0
 #define SORT_BY_PID 1
 #define SORT_BY_BURST 2
@@ -33,15 +35,186 @@ void printProcess(int n, PCB P[])
     }
 }
 
-void printStats(int n, PCB P[])
+// void exportGanttChart(int n, PCB P[])
+// {
+//     int total_time = 0;
+//     printf("Gantt Chart:\n");
+
+//     // Find the total time span
+//     for (int i = 0; i < n; i++)
+//     {
+//         int process_end_time = P[i].iStart + P[i].iBurst;
+//         if (process_end_time > total_time)
+//         {
+//             total_time = process_end_time;
+//         }
+//     }
+
+//     // Print the timeline
+//     for (int i = 0; i <= total_time; i++)
+//     {
+//         printf("-");
+//     }
+//     printf("\n|");
+
+//     // Print processes on the timeline
+//     for (int i = 0; i < n; i++)
+//     {
+//         int start = P[i].iStart;
+//         int end = P[i].iStart + P[i].iBurst;
+//         printf("\n|");
+
+//         // Print spaces before the start of the process
+//         for (int j = 0; j < start; j++)
+//         {
+//             printf(" ");
+//         }
+
+//         // Print the process ID
+//         for (int j = start; j < end; j++)
+//         {
+//             printf("%d", P[i].iPID);
+//         }
+//     }
+//     printf("\n");
+// }
+
+int hideStringIfTooLong(char *str, int maxLen)
 {
-    for (int i = 0; i < n; i++)
+    if (strlen(str) > maxLen)
     {
-        printf("P%d[arrival = %d, burst = %d, start=%d, finish=%d, wait=%d, response=%d, turnaround=%d]\n", P[i].iPID, P[i].iArrival, P[i].iBurst, P[i].iStart, P[i].iFinish, P[i].iWaiting, P[i].iResponse, P[i].iTaT);
+        strcpy(str, "!");
+        return 1;
+    }
+    return 0;
+}
+
+void exportGanttChart(int n, PCB P[])
+{
+    if (n == 0)
+    {
+        return;
+    }
+
+    // Create a 6 x (n * cellWidth) matrix of chars that represents our Gantt chart
+    char *grid[6];
+    const int cellWidth = 9;
+    const int col = (cellWidth * n) - (n - 1);
+    int maxStringWidth = floor(cellWidth / 2);
+    int currCell = 1;
+    int isHidden = 0;
+    char textToDisplay[20];
+
+    for (int i = 0; i < 6; i++)
+    {
+        grid[i] = malloc(col);
+    }
+
+    // Insert starting/finishing time points of each processes into the Gantt chart
+    memset(grid[0], ' ', col);
+    sprintf(textToDisplay, "%d", P[0].iStart);
+    isHidden = hideStringIfTooLong(textToDisplay, maxStringWidth);
+    strncpy(grid[0], textToDisplay, strlen(textToDisplay));
+
+    // endOfCell: the index of the terminating '|' character of each cell in the table
+    for (int endOfCell = cellWidth - 1; currCell - 1 < n; currCell++, endOfCell += (cellWidth - 1))
+    {
+        sprintf(textToDisplay, "%d", P[currCell - 1].iFinish);
+        isHidden = hideStringIfTooLong(textToDisplay, maxStringWidth);
+
+        if (currCell < n)
+        {
+            if (P[currCell - 1].iFinish != P[currCell].iStart)
+            {
+                strncpy(grid[0] + (endOfCell - strlen(textToDisplay)), textToDisplay, strlen(textToDisplay));
+                sprintf(textToDisplay, "%d", P[currCell].iStart);
+                isHidden = hideStringIfTooLong(textToDisplay, maxStringWidth - 1);
+                strncpy(grid[0] + endOfCell + 1, textToDisplay, strlen(textToDisplay));
+                continue;
+            }
+        }
+        strncpy(grid[0] + (endOfCell - strlen(textToDisplay) + 1), textToDisplay, strlen(textToDisplay));
+    }
+
+    // Draw borders for the chart
+    currCell = 1;
+    for (int i = 0; i < col; i++)
+    {
+        if (i == 0)
+        {
+            grid[1][i] = ' ';
+            grid[2][i] = '|';
+            grid[3][i] = '|';
+            grid[4][i] = '|';
+        }
+        else if ((i + currCell) % cellWidth == 0)
+        {
+            grid[1][i] = ' ';
+            grid[2][i] = '|';
+            grid[3][i] = '|';
+            grid[4][i] = '|';
+            currCell++;
+        }
+        else
+        {
+            grid[1][i] = '_';
+            grid[2][i] = ' ';
+            grid[3][i] = '_';
+            grid[4][i] = ' ';
+        }
+    }
+
+    // Insert PID('P0, P1, ...') texts into each cell
+    maxStringWidth = floor((cellWidth - 2) / 2);
+    currCell = 1;
+    for (int endOfCell = (cellWidth - 1); currCell - 1 < n; currCell++, endOfCell += (cellWidth - 1))
+    {
+        int currPid = P[currCell - 1].iPID;
+        char tmp[10];
+        strcpy(textToDisplay, (currPid > 0 && currPid < 10) ? "P0" : "P");
+        sprintf(tmp, "%d", P[currCell - 1].iPID);
+        strcat(textToDisplay, tmp);
+        isHidden = hideStringIfTooLong(textToDisplay, maxStringWidth);
+
+        int whitespace = floor((cellWidth - 2 - maxStringWidth) / 2);
+        int j = 0;
+        while (j < whitespace)
+        {
+            grid[2][endOfCell - 1 - j] = ' ';
+            grid[2][endOfCell - (cellWidth - 2) + j] = ' ';
+            j++;
+        }
+
+        int k = j;
+        while (j - k < strlen(textToDisplay))
+        {
+            grid[2][endOfCell - (cellWidth - 2) + j] = textToDisplay[j - k];
+            j++;
+        }
+    }
+
+    // Print result and free memory
+    for (int i = 0; i < 6; i++)
+    {
+        for (int j = 0; j < col; j++)
+        {
+            printf("%c", grid[i][j]);
+        }
+        printf("\n");
+        free(grid[i]);
+    }
+
+    // Optional
+    if (isHidden)
+    {
+        printf("Some stats were hidden from the chart, analysis:\n");
+        for (int i = 0; i < n; i++)
+        {
+            printf("P%d[arrival = %d, burst = %d, start=%d, finish=%d, wait=%d, response=%d, turnaround=%d]\n", P[i].iPID, P[i].iArrival, P[i].iBurst, P[i].iStart, P[i].iFinish, P[i].iWaiting, P[i].iResponse, P[i].iTaT);
+        }
     }
 }
 
-void exportGanttChart(int n, PCB P[]) {}
 void pushProcess(int *n, PCB P[], PCB Q)
 {
     P[(*n)++] = Q;
@@ -76,8 +249,7 @@ void removeProcess(int *n, int index, PCB P[])
         }
     }
 
-    *n = (*n) - 1;
-    // printf("after operation: %d", *n);
+    (*n)--;
 }
 
 int swapProcess(PCB *P, PCB *Q)
@@ -166,7 +338,7 @@ void calculateAWT(int n, PCB P[])
 void calculateATaT(int n, PCB P[])
 {
     int totalTurnaroundTime = 0;
-    
+
     for (int i = 0; i < n; i++)
     {
         totalTurnaroundTime += P[i].iTaT;
@@ -245,13 +417,11 @@ int main()
             ReadyQueue[0].iTaT = ReadyQueue[0].iFinish - ReadyQueue[0].iArrival;
         }
     }
-    
+
     printf("\n===== FCFS Scheduling =====\n");
     exportGanttChart(iTerminated, TerminatedArray);
+    printf("\n");
     quickSort(TerminatedArray, 0, iTerminated - 1, SORT_BY_PID);
-    printf("Analysis:\n");
-    printStats(iTerminated, TerminatedArray);
-
     calculateAWT(iTerminated, TerminatedArray);
     calculateATaT(iTerminated, TerminatedArray);
 
