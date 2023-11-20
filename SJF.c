@@ -35,6 +35,20 @@ void printProcess(int n, PCB P[])
     }
 }
 
+void printDetails(int n, PCB P[]){
+    printf("\nProcess Information:\n");
+    printf("--------------------------------------------------------------------------------------------------\n");
+    printf("| PID | Arrival Time | Burst Time | Start Time | Finish Time | Waiting Time | Response Time | Turnaround Time |\n");
+    printf("--------------------------------------------------------------------------------------------------\n");
+    
+    for (int i = 0; i < n; ++i) {
+        printf("| %3d | %12d | %10d | %10d | %11d | %12d | %13d | %15d |\n",
+            P[i].iPID, P[i].iArrival, P[i].iBurst, P[i].iStart,  P[i].iFinish, P[i].iWaiting, P[i].iResponse, P[i].iTaT);
+    }
+    printf("--------------------------------------------------------------------------------------------------\n");
+};
+
+
 int hideStringIfTooLong(char *str, int maxLen)
 {
     if (strlen(str) > maxLen)
@@ -161,28 +175,12 @@ void exportGanttChart(int n, PCB P[])
     }
 
     // Optional
-    if (isHidden)
+    if (isHidden != 0)
     {
         printf("Some stats were hidden from the chart, analysis:\n");
-        for (int i = 0; i < n; i++)
-        {
-            printf("P%d[arrival = %d, burst = %d, start=%d, finish=%d, wait=%d, response=%d, turnaround=%d]\n", P[i].iPID, P[i].iArrival, P[i].iBurst, P[i].iStart, P[i].iFinish, P[i].iWaiting, P[i].iResponse, P[i].iTaT);
-        }
+        printDetails(n, P);
     }
 }
-
-void printDetails(int n, PCB P[]){
-    printf("\nProcess Information:\n");
-    printf("--------------------------------------------------------------------------------------------------\n");
-    printf("| PID | Arrival Time | Burst Time | Start Time | Finish Time | Waiting Time | Response Time | Turnaround Time |\n");
-    printf("--------------------------------------------------------------------------------------------------\n");
-    
-    for (int i = 0; i < n; ++i) {
-        printf("| %3d | %12d | %10d | %10d | %11d | %12d | %13d | %15d |\n",
-            P[i].iPID, P[i].iArrival, P[i].iBurst, P[i].iStart,  P[i].iFinish, P[i].iWaiting, P[i].iResponse, P[i].iTaT);
-    }
-    printf("--------------------------------------------------------------------------------------------------\n");
-};
 
 void pushProcess(int *n, PCB P[], PCB Q)
 {
@@ -227,6 +225,7 @@ int swapProcess(PCB *P, PCB *Q)
     *P = *Q;
     *Q = tmp;
 }
+
 int partition(PCB arr[], int low, int high, int iCriteria)
 {
     PCB pivot = arr[high];
@@ -283,6 +282,7 @@ int partition(PCB arr[], int low, int high, int iCriteria)
     swapProcess(arr + i + 1, arr + high);
     return i + 1;
 }
+
 void quickSort(PCB arr[], int low, int high, int iCriteria)
 {
     if (low >= high)
@@ -292,6 +292,7 @@ void quickSort(PCB arr[], int low, int high, int iCriteria)
     quickSort(arr, low, pi - 1, iCriteria);
     quickSort(arr, pi + 1, high, iCriteria);
 }
+
 void calculateAWT(int n, PCB P[])
 {
     int totalWaitingTime = 0;
@@ -328,21 +329,21 @@ int main()
     int iRemain = iNumberOfProcess, iReady = 0, iTerminated = 0;
     inputProcess(iNumberOfProcess, Input);
 
-    // printf("Original: \n");
-    // printDetails(iRemain, Input);
+    printf("Original: \n");
+    printDetails(iRemain, Input);
 
-    // quickSort(Input, 0, iNumberOfProcess - 1, SORT_BY_ARRIVAL);
-    // printf("After sort by arrival: \n");
-    // printDetails(iRemain, Input);
+    quickSort(Input, 0, iNumberOfProcess - 1, SORT_BY_ARRIVAL);
+    printf("After sort by arrival: \n");
+    printDetails(iRemain, Input);
 
-    int count = 0;
-    for (int i = 0; i < iNumberOfProcess; i++) {
-        if (Input[i].iArrival == Input[i + 1].iArrival)
-            count++;
-        else 
-            break;
+    for (int start = 0, end; start < iNumberOfProcess - 1; start = end + 1) {
+        end = start;
+        while (Input[start].iArrival == Input[end + 1].iArrival) {
+            end++;
+        }
+        quickSort(Input, start, end, SORT_BY_BURST);
     }
-    quickSort(Input, 0, count, SORT_BY_BURST);
+
     printf("After sort by burst: \n");
     printDetails(iRemain, Input);
 
@@ -353,8 +354,6 @@ int main()
     ReadyQueue[0].iResponse = ReadyQueue[0].iStart - ReadyQueue[0].iArrival;
     ReadyQueue[0].iWaiting = ReadyQueue[0].iResponse;
     ReadyQueue[0].iTaT = ReadyQueue[0].iFinish - ReadyQueue[0].iArrival;
-
-    printDetails(iRemain, Input);
 
     printf("\nReady Queue: ");
     printDetails(1, ReadyQueue);
@@ -368,13 +367,12 @@ int main()
             {
                 pushProcess(&iReady, ReadyQueue, Input[0]);
                 removeProcess(&iRemain, 0, Input);
-                quickSort(ReadyQueue, 0, iReady, SORT_BY_BURST);
                 continue;
             }
             else
                 break;
         }
-        
+
         if (iReady > 0)
         {
             pushProcess(&iTerminated, TerminatedArray, ReadyQueue[0]);
@@ -383,14 +381,13 @@ int main()
             // Bug fix:
             if (iReady == 0)
             {
-                // If ReadyQueue is empty, we move process from Input to ReadyQueue, regardless of the condition described above.
+                // If ReadyQueue is empty and there are still some processes left in Input, we move process from Input to ReadyQueue, regardlessly.
                 if (iRemain > 0)
                 {
                     pushProcess(&iReady, ReadyQueue, Input[0]);
-                    quickSort(ReadyQueue, 0, iReady, SORT_BY_BURST);
                     removeProcess(&iRemain, 0, Input);
                 }
-                // If there aren't any remaining process in Input, we break out of while - loop
+                // If there aren't any remaining process in Input, we break out of while - loop (done)
                 else
                 {
                     break;
@@ -408,10 +405,9 @@ int main()
         }
     }
 
-    printf("\n===== FCFS Scheduling =====\n");
+    printf("\n===== SJF Scheduling =====\n");
     exportGanttChart(iTerminated, TerminatedArray);
     printf("\n");
-    quickSort(TerminatedArray, 0, iTerminated - 1, SORT_BY_PID);
     calculateAWT(iTerminated, TerminatedArray);
     calculateATaT(iTerminated, TerminatedArray);
     printDetails(iTerminated, TerminatedArray);
