@@ -27,7 +27,7 @@ void inputProcess(int n, PCB P[])
     }
 }
 
-void printProcess(int n, PCB P[])
+void printDetails(int n, PCB P[])
 {
     for (int i = 0; i < n; i++)
     {
@@ -368,7 +368,7 @@ int main()
     ReadyQueue[0].iTaT = ReadyQueue[0].iFinish - ReadyQueue[0].iArrival;
 
     printf("\nReady Queue: ");
-    printProcess(1, ReadyQueue);
+    printDetails(1, ReadyQueue);
 
     while (iTerminated < iNumberOfProcess)
     {
