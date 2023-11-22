@@ -265,6 +265,11 @@ int partition(PCB arr[], int low, int high, int iCriteria) {
             if (arr[j].iArrival < pivot.iArrival) {
                 i++;
                 swapProcess(arr + i, arr + j);
+            } else if (arr[j].iArrival == pivot.iArrival) {
+                if (arr[j].iPID < pivot.iPID) {
+                    i++;
+                    swapProcess(arr + i, arr + j);
+                }
             }
         }
         break;
@@ -273,6 +278,11 @@ int partition(PCB arr[], int low, int high, int iCriteria) {
             if (arr[j].iPID < pivot.iPID) {
                 i++;
                 swapProcess(arr + i, arr + j);
+            } else if (arr[j].iBurst == pivot.iBurst) {
+                if (arr[j].iArrival < pivot.iArrival) {
+                    i++;
+                    swapProcess(arr + i, arr + j);
+                }
             }
         }
         break;
@@ -281,6 +291,11 @@ int partition(PCB arr[], int low, int high, int iCriteria) {
             if (arr[j].iBurst < pivot.iBurst) {
                 i++;
                 swapProcess(arr + i, arr + j);
+            } else if (arr[j].iBurst == pivot.iBurst) {
+                if (arr[j].iPID < pivot.iPID) {
+                    i++;
+                    swapProcess(arr + i, arr + j);
+                }
             }
         }
         break;
@@ -289,6 +304,11 @@ int partition(PCB arr[], int low, int high, int iCriteria) {
             if (arr[j].iStart < pivot.iStart) {
                 i++;
                 swapProcess(arr + i, arr + j);
+            } else if (arr[j].iStart == pivot.iStart) {
+                if (arr[j].iArrival < pivot.iArrival) {
+                    i++;
+                    swapProcess(arr + i, arr + j);
+                }
             }
         }
         break;
