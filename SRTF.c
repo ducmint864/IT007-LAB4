@@ -1,3 +1,4 @@
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -12,7 +13,7 @@
 
 typedef struct {
     int iPID;
-    int iArrival, iBurst, iBurstRemaining, Flag;
+    int iArrival, iBurst, iBurstRemaining;
     int iStart, iFinish, iWaiting, iResponse, iTaT;
 } PCB;
 
@@ -25,6 +26,9 @@ void inputProcess(int n, PCB P[]) {
         scanf("%d", &P[i].iArrival);
         printf("\tInput burst time: ");
         scanf("%d", &P[i].iBurst);   
+        for (int i=0; i<n; i++) {
+            P[i].iBurstRemaining = P[i].iBurst;
+        }
     }
 }
 
@@ -176,7 +180,6 @@ void exportGanttChart(int n, PCB P[]) {
     }
 }
 
-
 //Thêm Process
 void pushProcess(int *n, PCB P[], PCB Q) {
     P[(*n)++] = Q;
@@ -195,7 +198,6 @@ void removeProcess(int *n, int index, PCB P[]) {
         P[0].iTaT = 0;
         P[0].iWaiting = 0;
         P[0].iBurstRemaining =0;
-        P[0].Flag = 0;
     }
     else
     {
@@ -211,7 +213,6 @@ void removeProcess(int *n, int index, PCB P[]) {
             P[i + 1].iTaT = 0;
             P[i + 1].iWaiting = 0;
             P[i + 1].iBurstRemaining =0;
-            P[i + 1].Flag = 0;
         }
     }
 
@@ -236,6 +237,11 @@ int partition(PCB arr[], int low, int high, int iCriteria) {
             if (arr[j].iArrival < pivot.iArrival) {
                 i++;
                 swapProcess(arr + i, arr + j);
+            } else if (arr[j].iArrival == pivot.iArrival) {
+                if (arr[j].iPID < pivot.iPID) {
+                    i++;
+                    swapProcess(arr + i, arr + j);
+                }
             }
         }
         break;
@@ -244,6 +250,11 @@ int partition(PCB arr[], int low, int high, int iCriteria) {
             if (arr[j].iPID < pivot.iPID) {
                 i++;
                 swapProcess(arr + i, arr + j);
+            } else if (arr[j].iBurst == pivot.iBurst) {
+                if (arr[j].iArrival < pivot.iArrival) {
+                    i++;
+                    swapProcess(arr + i, arr + j);
+                }
             }
         }
         break;
@@ -252,6 +263,11 @@ int partition(PCB arr[], int low, int high, int iCriteria) {
             if (arr[j].iBurst < pivot.iBurst) {
                 i++;
                 swapProcess(arr + i, arr + j);
+            } else if (arr[j].iBurst == pivot.iBurst) {
+                if (arr[j].iPID < pivot.iPID) {
+                    i++;
+                    swapProcess(arr + i, arr + j);
+                }
             }
         }
         break;
@@ -260,14 +276,24 @@ int partition(PCB arr[], int low, int high, int iCriteria) {
             if (arr[j].iStart < pivot.iStart) {
                 i++;
                 swapProcess(arr + i, arr + j);
+            } else if (arr[j].iStart == pivot.iStart) {
+                if (arr[j].iArrival < pivot.iArrival) {
+                    i++;
+                    swapProcess(arr + i, arr + j);
+                }
             }
         }
         break;
     case 4:
         for (int j = low; j <= high; j++) {
-            if (arr[j].iBurstRemaining < pivot.iBurstRemaining && (arr[j].iArrival<pivot.iArrival)) {
+            if (arr[j].iBurstRemaining < pivot.iBurstRemaining) {
                 i++;
                 swapProcess(arr + i, arr + j);
+            } else if (arr[j].iBurstRemaining == pivot.iBurstRemaining) {
+                if (arr[j].iArrival < pivot.iArrival) {
+                    i++;
+                    swapProcess(arr + i, arr + j);
+                }
             }
         }
         break;
@@ -326,49 +352,33 @@ int main() {
     int iReady = 0; //Số Process đang có trong Ready
     int iTerminated = 0; //Số Process đang có trong Terminated
     int Current = 0;
-    float Prev = 0;
-    float total_idle_time=0;
-    bool is_completed[100]={false};
 
     inputProcess(iNumberOfProcess, Input); //Nhập các thông tin của các Process và lưu vào trong mảng Input
     quickSort(Input, 0, iNumberOfProcess - 1, SORT_BY_ARRIVAL); //Sắp xếp các process trên theo Arrival
-    for (int i=0; i<iNumberOfProcess; i++) {
-        Input[i].iBurstRemaining = Input[i].iBurst;
-        Input[i].Flag = 0;
-    }
-    
 
-    while (iTerminated < iNumberOfProcess) { //Số Process trong Terminated ít hơn số Process toàn bài, tức trong tất cả Process vẫn có Process chưa hoàn thành    
-        //int min_index =-1;
-        //int minimum = INT_MAX;
-        //Nạp Process từ Input vào hàng đợi Ready nếu arrival thõa điều kiện
+    while (iTerminated < iNumberOfProcess) { //Tất cả Process vẫn có Process chưa hoàn thành    
+        //Nạp Process từ Input sang Ready và tìm Process có thời gian Burst remaining nhỏ nhất thời điểm Current
         while (iRemain > 0) { //Trong Input còn Process thì sẽ thực hiện xét điều kiện để nạp Process vào Ready
             //Thời gian đến của Process tiếp theo phải nhỏ hơn thời gian hiện thời thì mới được vào hàng đợi
-            //Kiểm tra xem tiến trình sắp được nạp vào ReadyQueue 
-            if (Input[0].iArrival <= Current && is_completed[0]==false) 
-            { 
-                pushProcess(&iReady, ReadyQueue, Input[0]); //Nạp Process từ Input sang Ready nếu thõa điều kiện trên
+            if (Input[0].iArrival <= Current) { 
+                pushProcess(&iReady, ReadyQueue, Input[0]); //Nạp Process từ Input sang Ready
                 removeProcess(&iRemain, 0, Input); //Nạp từ Input sang Ready nên ở Input sẽ xóa Process vừa được nạp
-                quickSort(ReadyQueue, 0, iReady - 1, SORT_BY_BURSTREMAINING); //sort các process theo Burst remaining 
-                //nếu 2 Process có cùng Burst Remaining thì ta sẽ xét theo Arrival_Time
-                //thằng nào tới trước làm trước
+                quickSort(ReadyQueue, 0, iReady - 1, SORT_BY_BURSTREMAINING); //Sort các process theo Burst remaining
+                //Nếu 2 Process có cùng Burst Remaining thì ta sẽ xét theo Arrival_Time xem ai tới trước sẽ thực hiện trước
             }
             else
-                break; //Nếu không còn Process nào có arrival nhỏ hơn finish của Process hiện hành thì thoát vòng lặp 
+                break; //Nếu không còn Process nào thõa điều kiện thì ngắt vòng lặp 
         }
-         //Nếu có process trong Ready Queue, xử lí tiến trình đang được chọn
+
+        //Nếu có process trong Ready Queue, tức là tìm được Process có Burst remaining nhỏ nhất 
         if (iReady > 0) { 
-            if (ReadyQueue[0].iBurstRemaining == ReadyQueue[0].iBurst) {    
+            if (ReadyQueue[0].iBurstRemaining == ReadyQueue[0].iBurst) { //Thời gian bắt đầu của Process sẽ là khi nó được thực hiện và Burst remaning của nó bằng với Burst 
                 ReadyQueue[0].iStart = Current;
-                total_idle_time +=ReadyQueue[0].iStart - Prev; //tính tổng thời gian CPU ko làm việc
             }
-            ReadyQueue[0].iBurstRemaining--;
-            Current+=1;
-            Prev = Current;
-            //Nếu tiến trình đó đã hoàn thành, cập nhật thời gian hoàn thành, thời gian chờ,.... của tiến trình đó
-            //Và đưa vào iTerminated
+            ReadyQueue[0].iBurstRemaining--; //Process sẽ mất đi 1s 
+            Current++; //Thời gian trôi qua 1s
+            //Nếu tiến trình đó đã hoàn thành, cập nhật thời gian hoàn thành, thời gian chờ,.... của tiến trình đó và đưa vào iTerminated
             if (ReadyQueue[0].iBurstRemaining == 0) {
-                is_completed[0]=true;
                 ReadyQueue[0].iFinish = Current;
                 ReadyQueue[0].iTaT = ReadyQueue[0].iFinish - ReadyQueue[0].iArrival;
                 ReadyQueue[0].iWaiting = ReadyQueue[0].iTaT - ReadyQueue[0].iBurst;
@@ -376,27 +386,10 @@ int main() {
                 pushProcess(&iTerminated, TerminatedArray, ReadyQueue[0]); //Process đầu tiên trong Ready sẽ được đẩy qua Terminated
                 removeProcess(&iReady, 0, ReadyQueue); //Đẩy qua Terminated thì xóa Process đó ở Ready
             }   
-            
             if (iReady == 0) { 
-                //nếu hàng đợi Ready đã hết process thì ta nạp vào từ Input
-                //phải xét điều kiện tiến trình nạp vào có AT có bé hơn hoặc bằng Current hay chưa
-                // if (iRemain > 0 && Input[0].iArrival <= Current) {
-                //     pushProcess(&iReady, ReadyQueue, Input[0]);
-                //     ReadyQueue[0].Flag=1;
-                //     removeProcess(&iRemain, 0, Input);
-                // }
-                //Nếu không có process nào trong ReadyQueue và có Process trong Input
-                //nhưng arrival_time của nó không bé hơn hoặc bằng Current thì không được nạp vào ReadyQueue
-                //tăng biến Current để theo dõi thời gian
-                if (iRemain > 0 && Input[0].iArrival > Current)
-                { 
-                    Current++;
-                }
-                else {
-                    break;
-                }
-                            }
-        }
+                if (iRemain == 0) break; //Nếu cả Input và Ready không còn Process thì cũng có nghĩa là Terminated bằng với iNumberOfProcess
+            }
+        } else Current++; //Trường hợp Ready không có gì nhưng Input vẫn còn, thì sẽ tăng thời gian để Input được đưa vào Ready ở vòng lặp sau
     }
 
     printProcess(iNumberOfProcess, TerminatedArray);
