@@ -239,7 +239,7 @@ int partition(PCB arr[], int low, int high, int iCriteria)
             if (arr[j].iPID < pivot.iPID) {
                 i++;
                 swapProcess(arr + i, arr + j);
-            } else if (arr[j].iBurst == pivot.iBurst) {
+            } else if (arr[j].iPID == pivot.iPID) {
                 if (arr[j].iArrival < pivot.iArrival) {
                     i++;
                     swapProcess(arr + i, arr + j);
