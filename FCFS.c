@@ -35,50 +35,6 @@ void printDetails(int n, PCB P[])
     }
 }
 
-// void exportGanttChart(int n, PCB P[])
-// {
-//     int total_time = 0;
-//     printf("Gantt Chart:\n");
-
-//     // Find the total time span
-//     for (int i = 0; i < n; i++)
-//     {
-//         int process_end_time = P[i].iStart + P[i].iBurst;
-//         if (process_end_time > total_time)
-//         {
-//             total_time = process_end_time;
-//         }
-//     }
-
-//     // Print the timeline
-//     for (int i = 0; i <= total_time; i++)
-//     {
-//         printf("-");
-//     }
-//     printf("\n|");
-
-//     // Print processes on the timeline
-//     for (int i = 0; i < n; i++)
-//     {
-//         int start = P[i].iStart;
-//         int end = P[i].iStart + P[i].iBurst;
-//         printf("\n|");
-
-//         // Print spaces before the start of the process
-//         for (int j = 0; j < start; j++)
-//         {
-//             printf(" ");
-//         }
-
-//         // Print the process ID
-//         for (int j = start; j < end; j++)
-//         {
-//             printf("%d", P[i].iPID);
-//         }
-//     }
-//     printf("\n");
-// }
-
 int hideStringIfTooLong(char *str, int maxLen)
 {
     if (strlen(str) > maxLen)
@@ -266,42 +222,54 @@ int partition(PCB arr[], int low, int high, int iCriteria)
     switch (iCriteria)
     {
     case 0:
-        for (int j = low; j <= high; j++)
-        {
-            if (arr[j].iArrival < pivot.iArrival)
-            {
+        for (int j = low; j <= high; j++) {
+            if (arr[j].iArrival < pivot.iArrival) {
                 i++;
                 swapProcess(arr + i, arr + j);
+            } else if (arr[j].iArrival == pivot.iArrival) {
+                if (arr[j].iPID < pivot.iPID) {
+                    i++;
+                    swapProcess(arr + i, arr + j);
+                }
             }
         }
         break;
     case 1:
-        for (int j = low; j <= high; j++)
-        {
-            if (arr[j].iPID < pivot.iPID)
-            {
+        for (int j = low; j <= high; j++) {
+            if (arr[j].iPID < pivot.iPID) {
                 i++;
                 swapProcess(arr + i, arr + j);
+            } else if (arr[j].iBurst == pivot.iBurst) {
+                if (arr[j].iArrival < pivot.iArrival) {
+                    i++;
+                    swapProcess(arr + i, arr + j);
+                }
             }
         }
         break;
     case 2:
-        for (int j = low; j <= high; j++)
-        {
-            if (arr[j].iBurst < pivot.iBurst)
-            {
+        for (int j = low; j <= high; j++) {
+            if (arr[j].iBurst < pivot.iBurst) {
                 i++;
                 swapProcess(arr + i, arr + j);
+            } else if (arr[j].iBurst == pivot.iBurst) {
+                if (arr[j].iPID < pivot.iPID) {
+                    i++;
+                    swapProcess(arr + i, arr + j);
+                }
             }
         }
         break;
     case 3:
-        for (int j = low; j <= high; j++)
-        {
-            if (arr[j].iStart < pivot.iStart)
-            {
+        for (int j = low; j <= high; j++) {
+            if (arr[j].iStart < pivot.iStart) {
                 i++;
                 swapProcess(arr + i, arr + j);
+            } else if (arr[j].iStart == pivot.iStart) {
+                if (arr[j].iArrival < pivot.iArrival) {
+                    i++;
+                    swapProcess(arr + i, arr + j);
+                }
             }
         }
         break;
