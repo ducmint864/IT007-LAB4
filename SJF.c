@@ -25,7 +25,7 @@ void inputProcess(int n, PCB P[]) {
     }
 }
 
-
+//In Process
 void printProcess(int n, PCB P[]) {
     printf("\n---------------------------------------------------------------------------------------------------------------\n");
     printf("| PID | Arrival Time | Burst Time | Start Time | Finish Time | Waiting Time | Response Time | Turnaround Time |");
@@ -38,50 +38,7 @@ void printProcess(int n, PCB P[]) {
     printf("---------------------------------------------------------------------------------------------------------------\n");
 }
 
-// void exportGanttChart(int n, PCB P[])
-// {
-//     int total_time = 0;
-//     printf("Gantt Chart:\n");
-
-//     // Find the total time span
-//     for (int i = 0; i < n; i++)
-//     {
-//         int process_end_time = P[i].iStart + P[i].iBurst;
-//         if (process_end_time > total_time)
-//         {
-//             total_time = process_end_time;
-//         }
-//     }
-
-//     // Print the timeline
-//     for (int i = 0; i <= total_time; i++)
-//     {
-//         printf("-");
-//     }
-//     printf("\n|");
-
-//     // Print processes on the timeline
-//     for (int i = 0; i < n; i++)
-//     {
-//         int start = P[i].iStart;
-//         int end = P[i].iStart + P[i].iBurst;
-//         printf("\n|");
-
-//         // Print spaces before the start of the process
-//         for (int j = 0; j < start; j++)
-//         {
-//             printf(" ");
-//         }
-
-//         // Print the process ID
-//         for (int j = start; j < end; j++)
-//         {
-//             printf("%d", P[i].iPID);
-//         }
-//     }
-//     printf("\n");
-// }
-
+//Các số quá lớn sẽ thay bằng ! để GanttChart dễ nhìn
 int hideStringIfTooLong(char *str, int maxLen) {
     if (strlen(str) > maxLen) {
         strcpy(str, "!");
@@ -90,6 +47,7 @@ int hideStringIfTooLong(char *str, int maxLen) {
     return 0;
 }
 
+//Tạo GanttChart
 void exportGanttChart(int n, PCB P[]) {
      if (n == 0)
     {
@@ -215,10 +173,12 @@ void exportGanttChart(int n, PCB P[]) {
     }
 }
 
+//Thêm Process
 void pushProcess(int *n, PCB P[], PCB Q) {
     P[(*n)++] = Q;
 }
 
+//Xóa Process
 void removeProcess(int *n, int index, PCB P[]) {
      if (*n == 1)
     {
@@ -250,11 +210,14 @@ void removeProcess(int *n, int index, PCB P[]) {
     (*n)--;
 }
 
+//Đổi chỗ 2 Process
 int swapProcess(PCB *P, PCB *Q) {
     PCB tmp = *P;
     *P = *Q;
     *Q = tmp;
 }
+
+//Partition để hỗ trợ sắp xếp Quicksort
 int partition(PCB arr[], int low, int high, int iCriteria) {
     PCB pivot = arr[high];
     int i = (low - 1);
@@ -278,7 +241,7 @@ int partition(PCB arr[], int low, int high, int iCriteria) {
             if (arr[j].iPID < pivot.iPID) {
                 i++;
                 swapProcess(arr + i, arr + j);
-            } else if (arr[j].iBurst == pivot.iBurst) {
+            } else if (arr[j].iPID == pivot.iPID) {
                 if (arr[j].iArrival < pivot.iArrival) {
                     i++;
                     swapProcess(arr + i, arr + j);
@@ -322,6 +285,7 @@ int partition(PCB arr[], int low, int high, int iCriteria) {
     return i + 1;
 }
 
+//Hàm sắp xếp Quicksort
 void quickSort(PCB arr[], int low, int high, int iCriteria) {
     if (low >= high) return;
 
@@ -329,6 +293,8 @@ void quickSort(PCB arr[], int low, int high, int iCriteria) {
     quickSort(arr, low, pi - 1, iCriteria);
     quickSort(arr, pi + 1, high, iCriteria);
 }
+
+//Tính thời gian đợi trung bình
 void calculateAWT(int n, PCB P[]) {
     int totalWaitingTime = 0;
     for (int i = 0; i < n; i++) {
@@ -339,6 +305,7 @@ void calculateAWT(int n, PCB P[]) {
     printf("Average Waiting Time: %.2fs\n", avgWaitingTime);
 }
 
+//Tính thời gian hoàn thành trung bình
 void calculateATaT(int n, PCB P[]) {
     int totalTurnaroundTime = 0;
 
@@ -375,7 +342,6 @@ int main() {
 
     pushProcess(&iReady, ReadyQueue, Input[0]); //Đẩy Process đầu tiên trong mảng Input sang ReadyQueue
     removeProcess(&iRemain, 0, Input); //Khi đẩy qua Ready thì phải xóa ở Input
-    /
     //Tính toán Process đầu tiên trong hàng đợi
     ReadyQueue[0].iStart = ReadyQueue[0].iArrival; 
     ReadyQueue[0].iFinish = ReadyQueue[0].iStart + ReadyQueue[0].iBurst;
@@ -384,13 +350,11 @@ int main() {
     ReadyQueue[0].iTaT = ReadyQueue[0].iFinish - ReadyQueue[0].iArrival;
 
     //Tính toán các Process còn lại
-    while (iTerminated < iNumberOfProcess) { //Số Process trong Terminated ít hơn số Process toàn bài, tức trong tất cả Process vẫn có Process chưa hoàn thành
-        
+    while (iTerminated < iNumberOfProcess) { //Tất cả Process vẫn có Process chưa hoàn thành    
         //Nạp Process từ Input vào hàng đợi Ready nếu arrival thõa điều kiện
         while (iRemain > 0) { //Trong Input còn Process thì sẽ thực hiện xét điều kiện để nạp Process vào Ready
-            // Bug: This line will cause infinite while - loop if Input[0] <= ReadyQueue[0].iFinish
             if (Input[0].iArrival <= ReadyQueue[0].iFinish) { //Thời gian đến của Process tiếp theo phải nhỏ hơn thời gian hoàn thành của Process đang thực thi thì mới được vào hàng đợi
-                pushProcess(&iReady, ReadyQueue, Input[0]); //Nạp Process từ Input sang Ready nếu thõa điều kiện trên
+                pushProcess(&iReady, ReadyQueue, Input[0]); //Nạp Process từ Input sang Ready
                 removeProcess(&iRemain, 0, Input); //Nạp từ Input sang Ready nên ở Input sẽ xóa Process vừa được nạp
                 quickSort(ReadyQueue, 1, iReady - 1, SORT_BY_BURST); //Cứ mỗi Process được thêm vào ở hàng đợi Ready, ta sắp xếp chúng lại theo thứ tự burst time
                 continue; //Thực hiện xong sẽ tiếp tục nạp các Process có arrival nhỏ hơn finish của Process hiện hành bằng vòng lặp while ở trên
@@ -399,15 +363,11 @@ int main() {
                 break; //Nếu không còn Process nào có arrival nhỏ hơn finish của Process hiện hành thì thoát vòng lặp 
         }
 
-        // printf("Exited while!\n");
-        // printf("iReady: %d", iReady);
-        
         //Chuyển các Process từ Ready sang Terminated
         if (iReady > 0) { //Nếu trong hàng đợi Ready có các Process thì các Process sẽ được thực thi để đưa vào Terminated
             pushProcess(&iTerminated, TerminatedArray, ReadyQueue[0]); //Process đầu tiên trong Ready sẽ được đẩy qua Terminated trước
             removeProcess(&iReady, 0, ReadyQueue); //Đẩy qua Terminated thì xóa Process đó ở Ready
 
-            // Bug fix:
             if (iReady == 0) { //Trong quá trình chuyển Ready sang Terminated, nếu hết Process trong Ready ta sẽ nạp từ Input vào mà không xét điều kiện gì 
                 // If ReadyQueue is empty, we move process from Input to ReadyQueue, regardless of the condition described above.
                 if (iRemain > 0) {
@@ -420,6 +380,8 @@ int main() {
                 }
             }
 
+
+            //Ta tính toán các Process khác Process thực hiện đầu tiên trong hàng đợi Ready ở mỗi vòng lặp
             ReadyQueue[0].iStart =
                 (TerminatedArray[iTerminated - 1].iFinish) < (ReadyQueue[0].iArrival)
                     ? ReadyQueue[0].iArrival
