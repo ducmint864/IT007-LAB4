@@ -26,9 +26,7 @@ void inputProcess(int n, PCB P[]) {
         scanf("%d", &P[i].iArrival);
         printf("\tInput burst time: ");
         scanf("%d", &P[i].iBurst);   
-        for (int i=0; i<n; i++) {
-            P[i].iBurstRemaining = P[i].iBurst;
-        }
+        P[i].iBurstRemaining = P[i].iBurst;
     }
 }
 
