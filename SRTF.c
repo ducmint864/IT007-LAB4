@@ -60,7 +60,7 @@ int hideStringIfTooLong(char *str, int maxLen)
     return 0;
 }
 
-// Tạo GanttChart
+// Hàm tạo và in ra GanttChart
 void exportGanttChart(int n, PCB P[])
 {
     if (n == 0)
@@ -68,7 +68,7 @@ void exportGanttChart(int n, PCB P[])
         return;
     }
 
-    // Create a 6 x (n * cellWidth) matrix of chars that represents our Gantt chart
+    // Tạo mảng ký tự kích thước 6 x (n * cellWidth) để biểu diễn Gantt Chart
     char *grid[6];
     const int cellWidth = 9;
     const int col = (cellWidth * n) - (n - 1);
@@ -82,13 +82,14 @@ void exportGanttChart(int n, PCB P[])
         grid[i] = malloc(col);
     }
 
-    // Insert starting/finishing time points of each processes into the Gantt chart
-    memset(grid[0], ' ', col);
+    // Hiển thị thời gian bắt đầu/kết thúc cho từng process
+    maxStringWidth = floor(cellWidth / 2);
+    strcpy(textToDisplay, "");
+    memset(grid[5], ' ', col);
     sprintf(textToDisplay, "%d", P[0].iStart);
     isHidden = hideStringIfTooLong(textToDisplay, maxStringWidth);
-    strncpy(grid[0], textToDisplay, strlen(textToDisplay));
+    strncpy(grid[5], textToDisplay, strlen(textToDisplay));
 
-    // endOfCell: the index of the terminating '|' character of each cell in the table
     for (int endOfCell = cellWidth - 1; currCell - 1 < n; currCell++, endOfCell += (cellWidth - 1))
     {
         sprintf(textToDisplay, "%d", P[currCell - 1].iFinish);
@@ -98,22 +99,23 @@ void exportGanttChart(int n, PCB P[])
         {
             if (P[currCell - 1].iFinish != P[currCell].iStart)
             {
-                strncpy(grid[0] + (endOfCell - strlen(textToDisplay)), textToDisplay, strlen(textToDisplay));
+                strncpy(grid[5] + (endOfCell - strlen(textToDisplay)), textToDisplay, strlen(textToDisplay));
                 sprintf(textToDisplay, "%d", P[currCell].iStart);
                 isHidden = hideStringIfTooLong(textToDisplay, maxStringWidth - 1);
-                strncpy(grid[0] + endOfCell + 1, textToDisplay, strlen(textToDisplay));
+                strncpy(grid[5] + endOfCell + 1, textToDisplay, strlen(textToDisplay));
                 continue;
             }
         }
-        strncpy(grid[0] + (endOfCell - strlen(textToDisplay) + 1), textToDisplay, strlen(textToDisplay));
+        strncpy(grid[5] + (endOfCell - strlen(textToDisplay) + 1), textToDisplay, strlen(textToDisplay));
     }
 
-    // Draw borders for the chart
+    // Kẻ viền cho biểu đồ
     currCell = 1;
     for (int i = 0; i < col; i++)
     {
         if (i == 0)
         {
+            grid[0][i] = ' ';
             grid[1][i] = '|';
             grid[2][i] = '|';
             grid[3][i] = '|';
@@ -121,6 +123,7 @@ void exportGanttChart(int n, PCB P[])
         }
         else if ((i + currCell) % cellWidth == 0)
         {
+            grid[0][i] = ' ';
             grid[1][i] = '|';
             grid[2][i] = '|';
             grid[3][i] = '|';
@@ -129,14 +132,15 @@ void exportGanttChart(int n, PCB P[])
         }
         else
         {
-            grid[1][i] = '_';
-            grid[2][i] = ' ';
-            grid[3][i] = '_';
+            grid[0][i] = '_';
+            grid[1][i] = ' ';
+            grid[2][i] = '_';
+            grid[3][i] = ' ';
             grid[4][i] = ' ';
         }
     }
 
-    // Insert PID('P0, P1, ...') texts into each cell
+    // Thêm dòng chữ PID('P0, P1, ...') vào từng ô
     maxStringWidth = floor((cellWidth - 2) / 2);
     currCell = 1;
     for (int endOfCell = (cellWidth - 1); currCell - 1 < n; currCell++, endOfCell += (cellWidth - 1))
@@ -152,20 +156,20 @@ void exportGanttChart(int n, PCB P[])
         int j = 0;
         while (j < whitespace)
         {
-            grid[2][endOfCell - 1 - j] = ' ';
-            grid[2][endOfCell - (cellWidth - 2) + j] = ' ';
+            grid[1][endOfCell - 1 - j] = ' ';
+            grid[1][endOfCell - (cellWidth - 2) + j] = ' ';
             j++;
         }
 
         int k = j;
         while (j - k < strlen(textToDisplay))
         {
-            grid[2][endOfCell - (cellWidth - 2) + j] = textToDisplay[j - k];
+            grid[1][endOfCell - (cellWidth - 2) + j] = textToDisplay[j - k];
             j++;
         }
     }
 
-    // Print result and free memory
+    // In ra Gantt Chart và free bộ nhớ
     printf("Gantt Chart:\n");
     for (int i = 0; i < 6; i++)
     {
@@ -175,16 +179,6 @@ void exportGanttChart(int n, PCB P[])
         }
         printf("\n");
         free(grid[i]);
-    }
-
-    // Optional
-    if (isHidden)
-    {
-        printf("Some stats were hidden from the chart, analysis:\n");
-        for (int i = 0; i < n; i++)
-        {
-            printf("P%d[arrival = %d, burst = %d, start=%d, finish=%d, wait=%d, response=%d, turnaround=%d]\n", P[i].iPID, P[i].iArrival, P[i].iBurst, P[i].iStart, P[i].iFinish, P[i].iWaiting, P[i].iResponse, P[i].iTaT);
-        }
     }
 }
 
@@ -409,7 +403,7 @@ int main()
     {
         if (Input[i].iArrival == Input[i + 1].iArrival)
             i++;
-        else 
+        else
             break;
     }
     quickSort(Input, 0, i, SORT_BY_BURST);
@@ -430,10 +424,11 @@ int main()
                 pushProcess(&iReady, ReadyQueue, Input[0]);                   // Nạp Process từ Input sang Ready
                 removeProcess(&iRemain, 0, Input);                            // Nạp từ Input sang Ready nên ở Input sẽ xóa Process vừa được nạp
                 quickSort(ReadyQueue, 0, iReady - 1, SORT_BY_BURSTREMAINING); // Sort các process theo Burst remaining, Nếu 2 Process có cùng Burst Remaining thì ta sẽ xét theo Arrival_Time xem ai tới trước sẽ thực hiện trước
-                
-                if (runningProcess.iPID != ReadyQueue[0].iPID)  // Sau khi sort by Burst remaining xong, nếu 2 biến này khác nhau, thì nghĩa process đang chạy đã bị trưng dụng để nhường slot cho process có remaining time thấp hơn
+
+                if (runningProcess.iPID != ReadyQueue[0].iPID) // Sau khi sort by Burst remaining xong, nếu 2 biến này khác nhau, thì nghĩa process đang chạy đã bị trưng dụng để nhường slot cho process có remaining time thấp hơn
                 {
-                    if (runningProcess.iBurstRemaining < runningProcess.iBurst) {
+                    if (runningProcess.iBurstRemaining < runningProcess.iBurst)
+                    {
                         runningProcess.iFinish = Current;
                         pushProcess(&iGanttChart, GanttChartArray, runningProcess);
                     }
@@ -454,7 +449,7 @@ int main()
             }
             ReadyQueue[0].iBurstRemaining--; // Process sẽ mất đi 1s
             runningProcess.iBurstRemaining--;
-            Current++;                       // Thời gian trôi qua 1s
+            Current++; // Thời gian trôi qua 1s
             // Nếu tiến trình đó đã hoàn thành, cập nhật thời gian hoàn thành, thời gian chờ,.... của tiến trình đó và đưa vào iTerminated
             if (ReadyQueue[0].iBurstRemaining == 0)
             {
@@ -464,14 +459,14 @@ int main()
                 ReadyQueue[0].iWaiting = ReadyQueue[0].iTaT - ReadyQueue[0].iBurst;
                 ReadyQueue[0].iResponse = ReadyQueue[0].iStart - ReadyQueue[0].iArrival;
                 pushProcess(&iGanttChart, GanttChartArray, runningProcess); // Đẩy process vào Gantt Chart
-                pushProcess(&iTerminated, TerminatedArray, ReadyQueue[0]); // Process đầu tiên trong Ready sẽ được đẩy qua Terminated
-                removeProcess(&iReady, 0, ReadyQueue);                     // Đẩy qua Terminated thì xóa Process đó ở Ready
-                runningProcess = ReadyQueue[0]; // Cho Process vừa bị trưng dụng trước đó làm lại cuộc đời (khởi đầu mới)
-                runningProcess.iStart = Current; // Tương tự dòng trên
+                pushProcess(&iTerminated, TerminatedArray, ReadyQueue[0]);  // Process đầu tiên trong Ready sẽ được đẩy qua Terminated
+                removeProcess(&iReady, 0, ReadyQueue);                      // Đẩy qua Terminated thì xóa Process đó ở Ready
+                runningProcess = ReadyQueue[0];                             // Cho Process vừa bị trưng dụng trước đó làm lại cuộc đời (khởi đầu mới)
+                runningProcess.iStart = Current;                            // Tương tự dòng trên
             }
             if (iReady == 0 && iRemain == 0) // Nếu cả Input và Ready không còn Process thì cũng có nghĩa là Terminated bằng với iNumberOfProcess
             {
-                break; 
+                break;
             }
         }
         else

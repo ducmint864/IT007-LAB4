@@ -47,14 +47,15 @@ int hideStringIfTooLong(char *str, int maxLen) {
     return 0;
 }
 
-//Tạo GanttChart
-void exportGanttChart(int n, PCB P[]) {
-     if (n == 0)
+// Hàm tạo và in ra GanttChart
+void exportGanttChart(int n, PCB P[])
+{
+    if (n == 0)
     {
         return;
     }
 
-    // Create a 6 x (n * cellWidth) matrix of chars that represents our Gantt chart
+    // Tạo mảng ký tự kích thước 6 x (n * cellWidth) để biểu diễn Gantt Chart
     char *grid[6];
     const int cellWidth = 9;
     const int col = (cellWidth * n) - (n - 1);
@@ -68,13 +69,14 @@ void exportGanttChart(int n, PCB P[]) {
         grid[i] = malloc(col);
     }
 
-    // Insert starting/finishing time points of each processes into the Gantt chart
-    memset(grid[0], ' ', col);
+    // Hiển thị thời gian bắt đầu/kết thúc cho từng process
+    maxStringWidth = floor(cellWidth / 2);
+    strcpy(textToDisplay, "");
+    memset(grid[5], ' ', col);
     sprintf(textToDisplay, "%d", P[0].iStart);
     isHidden = hideStringIfTooLong(textToDisplay, maxStringWidth);
-    strncpy(grid[0], textToDisplay, strlen(textToDisplay));
+    strncpy(grid[5], textToDisplay, strlen(textToDisplay));
 
-    // endOfCell: the index of the terminating '|' character of each cell in the table
     for (int endOfCell = cellWidth - 1; currCell - 1 < n; currCell++, endOfCell += (cellWidth - 1))
     {
         sprintf(textToDisplay, "%d", P[currCell - 1].iFinish);
@@ -84,22 +86,23 @@ void exportGanttChart(int n, PCB P[]) {
         {
             if (P[currCell - 1].iFinish != P[currCell].iStart)
             {
-                strncpy(grid[0] + (endOfCell - strlen(textToDisplay)), textToDisplay, strlen(textToDisplay));
+                strncpy(grid[5] + (endOfCell - strlen(textToDisplay)), textToDisplay, strlen(textToDisplay));
                 sprintf(textToDisplay, "%d", P[currCell].iStart);
                 isHidden = hideStringIfTooLong(textToDisplay, maxStringWidth - 1);
-                strncpy(grid[0] + endOfCell + 1, textToDisplay, strlen(textToDisplay));
+                strncpy(grid[5] + endOfCell + 1, textToDisplay, strlen(textToDisplay));
                 continue;
             }
         }
-        strncpy(grid[0] + (endOfCell - strlen(textToDisplay) + 1), textToDisplay, strlen(textToDisplay));
+        strncpy(grid[5] + (endOfCell - strlen(textToDisplay) + 1), textToDisplay, strlen(textToDisplay));
     }
 
-    // Draw borders for the chart
+    // Kẻ viền cho biểu đồ
     currCell = 1;
     for (int i = 0; i < col; i++)
     {
         if (i == 0)
         {
+            grid[0][i] = ' ';
             grid[1][i] = '|';
             grid[2][i] = '|';
             grid[3][i] = '|';
@@ -107,6 +110,7 @@ void exportGanttChart(int n, PCB P[]) {
         }
         else if ((i + currCell) % cellWidth == 0)
         {
+            grid[0][i] = ' ';
             grid[1][i] = '|';
             grid[2][i] = '|';
             grid[3][i] = '|';
@@ -115,14 +119,15 @@ void exportGanttChart(int n, PCB P[]) {
         }
         else
         {
-            grid[1][i] = '_';
-            grid[2][i] = ' ';
-            grid[3][i] = '_';
+            grid[0][i] = '_';
+            grid[1][i] = ' ';
+            grid[2][i] = '_';
+            grid[3][i] = ' ';
             grid[4][i] = ' ';
         }
     }
 
-    // Insert PID('P0, P1, ...') texts into each cell
+    // Thêm dòng chữ PID('P0, P1, ...') vào từng ô
     maxStringWidth = floor((cellWidth - 2) / 2);
     currCell = 1;
     for (int endOfCell = (cellWidth - 1); currCell - 1 < n; currCell++, endOfCell += (cellWidth - 1))
@@ -138,20 +143,20 @@ void exportGanttChart(int n, PCB P[]) {
         int j = 0;
         while (j < whitespace)
         {
-            grid[2][endOfCell - 1 - j] = ' ';
-            grid[2][endOfCell - (cellWidth - 2) + j] = ' ';
+            grid[1][endOfCell - 1 - j] = ' ';
+            grid[1][endOfCell - (cellWidth - 2) + j] = ' ';
             j++;
         }
 
         int k = j;
         while (j - k < strlen(textToDisplay))
         {
-            grid[2][endOfCell - (cellWidth - 2) + j] = textToDisplay[j - k];
+            grid[1][endOfCell - (cellWidth - 2) + j] = textToDisplay[j - k];
             j++;
         }
     }
 
-    // Print result and free memory
+    // In ra Gantt Chart và free bộ nhớ
     printf("Gantt Chart:\n");
     for (int i = 0; i < 6; i++)
     {
@@ -161,16 +166,6 @@ void exportGanttChart(int n, PCB P[]) {
         }
         printf("\n");
         free(grid[i]);
-    }
-
-    // Optional
-    if (isHidden)
-    {
-        printf("Some stats were hidden from the chart, analysis:\n");
-        for (int i = 0; i < n; i++)
-        {
-            printf("P%d[arrival = %d, burst = %d, start=%d, finish=%d, wait=%d, response=%d, turnaround=%d]\n", P[i].iPID, P[i].iArrival, P[i].iBurst, P[i].iStart, P[i].iFinish, P[i].iWaiting, P[i].iResponse, P[i].iTaT);
-        }
     }
 }
 
