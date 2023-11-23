@@ -152,6 +152,7 @@ void exportGanttChart(int n, PCB P[]) {
     }
 
     // Print result and free memory
+    printf("Gantt Chart:\n");
     for (int i = 0; i < 6; i++)
     {
         for (int j = 0; j < col; j++)
