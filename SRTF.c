@@ -399,7 +399,7 @@ int main()
 
     quickSort(Input, 0, iNumberOfProcess - 1, SORT_BY_ARRIVAL); // Sắp xếp các process trên theo Arrival
     int i = 0;
-    for (int i = 0; i < iRemain - 1; i++)
+    for (; i < iRemain - 1; i++)
     {
         if (Input[i].iArrival == Input[i + 1].iArrival)
             i++;
