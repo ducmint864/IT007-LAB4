@@ -480,7 +480,6 @@ int main()
     quickSort(TerminatedArray, 0, iTerminated - 1, SORT_BY_PID);
     calculateAWT(iTerminated, TerminatedArray);
     calculateATaT(iTerminated, TerminatedArray);
-    printf("Size of gantt chart array: %d\n", iGanttChart);
-
+    
     return 0;
 }
