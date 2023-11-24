@@ -348,15 +348,11 @@ int main() {
     //Tính toán các Process còn lại
     while (iTerminated < iNumberOfProcess) { //Tất cả Process vẫn có Process chưa hoàn thành    
         //Nạp Process từ Input vào hàng đợi Ready nếu arrival thõa điều kiện
-        while (iRemain > 0) { //Trong Input còn Process thì sẽ thực hiện xét điều kiện để nạp Process vào Ready
-            if (Input[0].iArrival <= ReadyQueue[0].iFinish) { //Thời gian đến của Process tiếp theo phải nhỏ hơn thời gian hoàn thành của Process đang thực thi thì mới được vào hàng đợi
+        while (iRemain > 0 && Input[0].iArrival <= ReadyQueue[0].iFinish) { //Trong Input còn Process thì sẽ thực hiện xét điều kiện để nạp Process vào Ready
+        //Thời gian đến của Process tiếp theo phải nhỏ hơn thời gian hoàn thành của Process đang thực thi thì mới được vào hàng đợi
                 pushProcess(&iReady, ReadyQueue, Input[0]); //Nạp Process từ Input sang Ready
                 removeProcess(&iRemain, 0, Input); //Nạp từ Input sang Ready nên ở Input sẽ xóa Process vừa được nạp
                 quickSort(ReadyQueue, 1, iReady - 1, SORT_BY_BURST); //Cứ mỗi Process được thêm vào ở hàng đợi Ready, ta sắp xếp chúng lại theo thứ tự burst time
-                continue; //Thực hiện xong sẽ tiếp tục nạp các Process có arrival nhỏ hơn finish của Process hiện hành bằng vòng lặp while ở trên
-            }
-            else
-                break; //Nếu không còn Process nào có arrival nhỏ hơn finish của Process hiện hành thì thoát vòng lặp 
         }
 
         //Chuyển các Process từ Ready sang Terminated
